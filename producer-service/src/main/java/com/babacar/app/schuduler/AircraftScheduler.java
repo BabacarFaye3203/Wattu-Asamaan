@@ -44,7 +44,7 @@ public class AircraftScheduler {
                     .limit(1000)
                     .forEach(producer::send);
 
-            log.info("📡 Sent {} aircrafts", aircrafts.size());
+            log.info(" Sent {} aircrafts", aircrafts.size());
 
         } catch (Exception e) {
             log.error("Scheduler error: {}", e.getMessage(), e);
