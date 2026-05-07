@@ -1,7 +1,6 @@
-package com.babacar.app.config;
-
+package com.babacar.app.streams;
+import com.babacar.app.constants.AirCraftConstants;
 import com.babacar.app.dto.AircraftState;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
@@ -10,21 +9,27 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafkaStreams;
 import org.springframework.kafka.support.serializer.JsonSerde;
 
-import java.time.Duration;
+import java.util.logging.Logger;
+
 
 @Configuration
 @EnableKafkaStreams
-@Slf4j
-public class KafkaStreamsConfig {
+public class KafkaStreams {
 
-    private static final Duration WINDOW_SIZE = Duration.ofSeconds(10);
-    private static final long SPEED_ALERT_THRESHOLD = 900L;
+    private static final Logger log =
+            Logger.getLogger("OBSERVABILITY");
 
     @Bean
     public KStream<String, AircraftState> aircraftStream(StreamsBuilder builder) {
 
+        JsonSerde<AircraftState> aircraftSerde =
+                new JsonSerde<>(AircraftState.class);
+
         KStream<String, AircraftState> sourceStream =
-                builder.stream("aircraft-raw");
+                builder.stream(
+                        "aircraft-raw",
+                        Consumed.with(Serdes.String(), aircraftSerde)
+                );
 
         // CLEAN STREAM
         KStream<String, AircraftState> cleanStream = sourceStream
@@ -39,7 +44,7 @@ public class KafkaStreamsConfig {
         // PROCESSED STREAM
         cleanStream.to("aircraft-processed");
 
-        // WINDOWED AGGREGATION (PRO LEVEL)
+        // WINDOWED AGGREGATION
         KTable<Windowed<String>, Long> trafficByCountry =
                 cleanStream
                         .groupBy((key, value) -> value.originCountry(),
@@ -48,19 +53,18 @@ public class KafkaStreamsConfig {
                                         new JsonSerde<>(AircraftState.class)
                                 )
                         )
-                        .windowedBy(TimeWindows.ofSizeWithNoGrace(WINDOW_SIZE))
+                        .windowedBy(TimeWindows.ofSizeWithNoGrace(AirCraftConstants.WINDOW_SIZE))
                         .count();
 
-        // LOG OUTPUT (DEBUG / OBSERVABILITY)
-//        trafficByCountry.toStream()
-//                .peek((windowedKey, count) ->
-//                        log.info("🌍 Country: {} | Count: {} | Window: {} → {}",
-//                                windowedKey.key(),
-//                                count,
-//                                windowedKey.window().startTime(),
-//                                windowedKey.window().endTime()
-//                        )
-//                );
+         //LOG OUTPUT (DEBUG / OBSERVABILITY)
+        trafficByCountry.toStream()
+                .peek((windowedKey, count) ->
+                        log.info("🌍 Country: "+windowedKey.key()+" | Count:"+count+ "| Window:" +windowedKey.window().startTime()+" → "+
+                                windowedKey.window().endTime()
+
+
+                        )
+                );
 
         return sourceStream;
     }
@@ -73,6 +77,6 @@ public class KafkaStreamsConfig {
     }
 
     private boolean isSpeedAnomaly(AircraftState a) {
-        return a.velocity() != null && a.velocity() > SPEED_ALERT_THRESHOLD;
+        return a.velocity() != null && a.velocity() > AirCraftConstants.SPEED_ALERT_THRESHOLD;
     }
 }

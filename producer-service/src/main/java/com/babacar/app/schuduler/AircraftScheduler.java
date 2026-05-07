@@ -16,13 +16,12 @@ public class AircraftScheduler {
     private final OpenSkyService openSkyService;
     private final AircraftProducer producer;
 
-    public AircraftScheduler(OpenSkyService openSkyService,
-                             AircraftProducer producer) {
+    public AircraftScheduler(OpenSkyService openSkyService, AircraftProducer producer) {
         this.openSkyService = openSkyService;
         this.producer = producer;
     }
     private long lastCallTime = 0;
-    private static final long MIN_INTERVAL = 30000;
+    private static final long MIN_INTERVAL = 300000;
 
     @Scheduled(fixedDelay = 10000)
     public void fetchAndSend() {
@@ -41,9 +40,8 @@ public class AircraftScheduler {
             List<AircraftState> aircrafts = openSkyService.fetchAircrafts();
 
             aircrafts.stream()
-                    .limit(1000)
+                    .limit(100)
                     .forEach(producer::send);
-
             log.info("📡 Sent {} aircrafts", aircrafts.size());
 
         } catch (Exception e) {
@@ -51,9 +49,4 @@ public class AircraftScheduler {
         }
     }
 
-    private boolean isValidAircraft(AircraftState a) {
-        return a != null
-                && a.latitude() != null
-                && a.longitude() != null;
-    }
 }

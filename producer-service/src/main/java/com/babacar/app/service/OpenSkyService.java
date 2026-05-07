@@ -15,32 +15,23 @@ public class OpenSkyService {
     public List<AircraftState> fetchAircrafts() {
 
         RestTemplate restTemplate = new RestTemplate();
-
-        OpenSkyResponse response =
-                restTemplate.getForObject(URL, OpenSkyResponse.class);
-
+        OpenSkyResponse response = restTemplate.getForObject(URL, OpenSkyResponse.class);
         List<AircraftState> result = new ArrayList<>();
 
         if (response != null && response.states() != null) {
-
             for (List<Object> state : response.states()) {
 
                 AircraftState aircraft = new AircraftState(
                         (String) state.get(0),
                         (String) state.get(1),
-
                         toDouble(state.get(5)),  // longitude
                         toDouble(state.get(6)),  // latitude
                         toDouble(state.get(7)),  // altitude
                         toDouble(state.get(9)),  // velocity
-
                         (String) state.get(2),
                         System.currentTimeMillis()
                 );
-
-                if (aircraft.latitude() == null || aircraft.longitude() == null) {
-                    continue;
-                }
+                if (aircraft.latitude() == null || aircraft.longitude() == null) continue;
 
                 result.add(aircraft);
             }
