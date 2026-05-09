@@ -2,19 +2,22 @@ package com.babacar.app.service;
 
 import com.babacar.app.dto.AircraftState;
 import com.babacar.app.dto.OpenSkyResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class OpenSkyService {
+    private final RestTemplate restTemplate;
 
     private final String URL = "https://opensky-network.org/api/states/all";
 
     public List<AircraftState> fetchAircrafts() {
 
-        RestTemplate restTemplate = new RestTemplate();
+//        RestTemplate restTemplate = new RestTemplate();
         OpenSkyResponse response = restTemplate.getForObject(URL, OpenSkyResponse.class);
         List<AircraftState> result = new ArrayList<>();
 
