@@ -1,12 +1,15 @@
 package com.babacar.app.consumer;
 
 import com.babacar.app.dto.AircraftState;
+import com.babacar.app.dto.DashboardStats;
 import com.babacar.app.entities.AirCraftProsseed;
-import com.babacar.app.repositories.AirCraftProsseedRepository;
+import com.babacar.app.repositories.AirCraftProcessedRepository;
+import com.babacar.app.stats.AircraftStatsService;
+import com.babacar.app.websocket.AircraftWebSocketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import java.util.UUID;
 
@@ -15,8 +18,10 @@ import java.util.UUID;
 @Slf4j
 public class ProsseedAirCraftConsumer {
 
-    private final AirCraftProsseedRepository repository;
-
+    private final AirCraftProcessedRepository repository;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final AircraftWebSocketService aircraftWebSocketService;
+    private final AircraftStatsService aircraftStatsService;
 
     @KafkaListener(topics = "aircraft-processed",groupId = "aircraft-processed-id")
     public void getAircraftAlerts(AircraftState aircraftState){
@@ -34,6 +39,18 @@ public class ProsseedAirCraftConsumer {
                 .build();
         repository.insert(airCraft);
 
+        log.info("🔥 PROCESSED WS SEND TEST");
+        aircraftWebSocketService.sendProcessedAircraft(airCraft);
+        aircraftStatsService.incrementAircraft(aircraftState.velocity());
+        aircraftStatsService.incrementCountry(aircraftState.originCountry());
 
+        DashboardStats stats = DashboardStats.builder()
+                .totalAircrafts(aircraftStatsService.getTotalAircrafts().get())
+                .averageSpeed(aircraftStatsService.getAverageSpeed())
+                .activeAlerts(aircraftStatsService.getTotalAlerts().get())
+                .mostActiveCountry(aircraftStatsService.getTopCountry())
+                .build();
+
+        aircraftWebSocketService.sendStats(stats);
     }
 }

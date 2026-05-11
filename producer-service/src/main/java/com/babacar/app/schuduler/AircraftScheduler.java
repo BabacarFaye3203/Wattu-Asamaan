@@ -20,19 +20,9 @@ public class AircraftScheduler {
         this.openSkyService = openSkyService;
         this.producer = producer;
     }
-    private long lastCallTime = 0;
-    private static final long MIN_INTERVAL = 300000;
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelay = 60000)
     public void fetchAndSend() {
-
-        long now = System.currentTimeMillis();
-
-        if (now - lastCallTime < MIN_INTERVAL) {
-            return; // skip call
-        }
-
-        lastCallTime = now;
 
         try {
             log.info(" Fetching OpenSky data...");

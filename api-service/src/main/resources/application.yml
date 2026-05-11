@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8084
 spring:
   application:
     name: api-service
@@ -14,7 +14,12 @@ spring:
         spring:
           json:
             trusted:
-              packages: com.babacar.app.dto
+              packages: "*"
   data:
     mongodb:
       uri: mongodb://localhost:27017/aircrafts
+
+
+springdoc:
+  api-docs:
+    path: /api-docs

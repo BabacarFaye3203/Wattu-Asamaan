@@ -4,7 +4,7 @@ import lombok.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 
-@Document(collation = "air-craft-alert")
+@Document(collection = "airCraftAlert")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
